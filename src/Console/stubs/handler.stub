@@ -1,0 +1,13 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ commandNamespace }}\{{ commandClass }};
+
+class {{ class }}
+{
+    public function handle({{ commandClass }} $command): mixed
+    {
+        //
+    }
+}

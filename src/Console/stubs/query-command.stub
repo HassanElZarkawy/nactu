@@ -1,0 +1,27 @@
+<?php
+
+namespace {{ namespace }};
+
+use Nactu\Contracts\CacheableQuery;
+
+readonly class {{ class }} implements CacheableQuery
+{
+    public function __construct()
+    {
+    }
+
+    public function getCacheTtl(): ?int
+    {
+        return null;
+    }
+
+    public function getCacheTags(): array
+    {
+        return [];
+    }
+
+    public function shouldBypassCache(): bool
+    {
+        return false;
+    }
+}

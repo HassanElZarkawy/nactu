@@ -1,0 +1,38 @@
+{
+  "name": "hassanelzarkawy/nactu",
+  "description": "A Command Bus implementation with middleware pipeline, query caching, and retry support for Laravel",
+  "type": "library",
+  "license": "MIT",
+  "version": "0.0.1",
+  "authors": [
+    {
+      "role": "Developer",
+      "name": "Hassan El-Zarkawy",
+      "email": "hassan.elzarkawy@gmail.com",
+      "homepage": "https://www.github.com/HassanElZarkawy"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Nactu\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Nactu\\Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "php": "^8.4",
+    "illuminate/contracts": "^13.11",
+    "illuminate/support": "^13.11",
+    "laravel/framework": "^13.11"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "sort-packages": true,
+    "preferred-install": "dist",
+    "optimize-autoloader": true
+  }
+}
