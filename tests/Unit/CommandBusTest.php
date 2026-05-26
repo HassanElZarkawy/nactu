@@ -39,7 +39,8 @@ class CommandBusTest extends TestCase
     {
         $command = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $command): string
             {
                 return 'executed';
@@ -73,7 +74,8 @@ class CommandBusTest extends TestCase
     {
         $command = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function __invoke(object $command): string
             {
                 return 'invoked';
@@ -95,7 +97,8 @@ class CommandBusTest extends TestCase
         $command = new class {};
         $log = [];
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $command): void {}
         };
 
@@ -132,14 +135,16 @@ class CommandBusTest extends TestCase
     #[Test]
     public function it_passes_command_data_to_handler(): void
     {
-        $command = new class('Hassan') {
+        $command = new class('Hassan')
+        {
             public function __construct(public string $name) {}
         };
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $command): string
             {
-                return 'Created: ' . $command->name;
+                return 'Created: '.$command->name;
             }
         };
 
@@ -165,7 +170,8 @@ class CommandBusTest extends TestCase
     {
         $command = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public int $count = 0;
 
             public function handle(object $command): int
@@ -188,7 +194,8 @@ class CommandBusTest extends TestCase
     {
         $command = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $command): string
             {
                 return 'created';
@@ -213,7 +220,8 @@ class CommandBusTest extends TestCase
     {
         $command = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $command): string
             {
                 return 'should_not_reach';
@@ -237,14 +245,16 @@ class CommandBusTest extends TestCase
         $commandA = new class {};
         $commandB = new class {};
 
-        $handlerA = new class {
+        $handlerA = new class
+        {
             public function handle(object $command): string
             {
                 return 'A';
             }
         };
 
-        $handlerB = new class {
+        $handlerB = new class
+        {
             public function handle(object $command): string
             {
                 return 'B';

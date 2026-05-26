@@ -50,7 +50,8 @@ class CacheQueryMiddlewareTest extends TestCase
     #[Test]
     public function it_caches_cacheable_queries(): void
     {
-        $query = new class implements CacheableQuery {
+        $query = new class implements CacheableQuery
+        {
             public function getCacheTtl(): ?int
             {
                 return null;
@@ -89,7 +90,8 @@ class CacheQueryMiddlewareTest extends TestCase
     #[Test]
     public function it_bypasses_cache_when_should_bypass_is_true(): void
     {
-        $query = new class implements CacheableQuery {
+        $query = new class implements CacheableQuery
+        {
             public function getCacheTtl(): ?int
             {
                 return null;
@@ -126,7 +128,8 @@ class CacheQueryMiddlewareTest extends TestCase
     #[Test]
     public function it_uses_custom_ttl_from_query(): void
     {
-        $query = new class implements CacheableQuery {
+        $query = new class implements CacheableQuery
+        {
             public function getCacheTtl(): ?int
             {
                 return 600;
@@ -151,7 +154,8 @@ class CacheQueryMiddlewareTest extends TestCase
     #[Test]
     public function it_falls_back_to_default_ttl(): void
     {
-        $query = new class implements CacheableQuery {
+        $query = new class implements CacheableQuery
+        {
             public function getCacheTtl(): ?int
             {
                 return null;
@@ -176,7 +180,8 @@ class CacheQueryMiddlewareTest extends TestCase
     #[Test]
     public function it_returns_cached_result_on_second_call(): void
     {
-        $queryA = new class implements CacheableQuery {
+        $queryA = new class implements CacheableQuery
+        {
             public function getCacheTtl(): ?int
             {
                 return 300;
@@ -193,7 +198,8 @@ class CacheQueryMiddlewareTest extends TestCase
             }
         };
 
-        $queryB = new class implements CacheableQuery {
+        $queryB = new class implements CacheableQuery
+        {
             public function getCacheTtl(): ?int
             {
                 return 300;

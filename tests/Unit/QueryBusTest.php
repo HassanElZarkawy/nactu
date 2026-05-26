@@ -39,7 +39,8 @@ class QueryBusTest extends TestCase
     {
         $query = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $query): string
             {
                 return 'result';
@@ -73,7 +74,8 @@ class QueryBusTest extends TestCase
     {
         $query = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function __invoke(object $query): int
             {
                 return 42;
@@ -95,7 +97,8 @@ class QueryBusTest extends TestCase
         $query = new class {};
         $log = [];
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $query): string
             {
                 return 'done';
@@ -135,14 +138,16 @@ class QueryBusTest extends TestCase
     #[Test]
     public function it_passes_query_data_to_handler(): void
     {
-        $query = new class('Hassan') {
+        $query = new class('Hassan')
+        {
             public function __construct(public string $name) {}
         };
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $query): string
             {
-                return 'Hello, ' . $query->name;
+                return 'Hello, '.$query->name;
             }
         };
 
@@ -160,7 +165,8 @@ class QueryBusTest extends TestCase
     {
         $query = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public int $invocationCount = 0;
 
             public function handle(object $query): int
@@ -193,7 +199,8 @@ class QueryBusTest extends TestCase
     {
         $query = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $query): string
             {
                 return 'original';
@@ -218,7 +225,8 @@ class QueryBusTest extends TestCase
     {
         $query = new class {};
 
-        $handler = new class {
+        $handler = new class
+        {
             public function handle(object $query): string
             {
                 return 'from_handler';
@@ -244,14 +252,16 @@ class QueryBusTest extends TestCase
         $queryA = new class {};
         $queryB = new class {};
 
-        $handlerA = new class {
+        $handlerA = new class
+        {
             public function handle(object $query): string
             {
                 return 'A';
             }
         };
 
-        $handlerB = new class {
+        $handlerB = new class
+        {
             public function handle(object $query): string
             {
                 return 'B';

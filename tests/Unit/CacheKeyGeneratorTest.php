@@ -20,8 +20,10 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_generates_key_from_public_properties(): void
     {
-        $command = new class {
+        $command = new class
+        {
             public string $name = 'Hassan';
+
             public int $age = 30;
         };
 
@@ -34,7 +36,8 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_generates_key_from_private_properties(): void
     {
-        $command = new class('Hassan', 30) {
+        $command = new class('Hassan', 30)
+        {
             public function __construct(
                 private string $name,
                 private int $age,
@@ -49,8 +52,10 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_generates_deterministic_keys(): void
     {
-        $command = new class {
+        $command = new class
+        {
             public string $name = 'Hassan';
+
             public int $age = 30;
         };
 
@@ -63,11 +68,13 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_generates_different_keys_for_different_properties(): void
     {
-        $commandA = new class {
+        $commandA = new class
+        {
             public string $name = 'Hassan';
         };
 
-        $commandB = new class {
+        $commandB = new class
+        {
             public string $name = 'Ali';
         };
 
@@ -80,11 +87,13 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_generates_different_keys_for_different_types(): void
     {
-        $commandA = new class {
+        $commandA = new class
+        {
             public string $value = '1';
         };
 
-        $commandB = new class {
+        $commandB = new class
+        {
             public int $value = 1;
         };
 
@@ -97,8 +106,10 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_ignores_null_properties(): void
     {
-        $command = new class {
+        $command = new class
+        {
             public ?string $name = null;
+
             public int $age = 30;
         };
 
@@ -181,11 +192,13 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_handles_boolean_values(): void
     {
-        $commandA = new class {
+        $commandA = new class
+        {
             public bool $active = true;
         };
 
-        $commandB = new class {
+        $commandB = new class
+        {
             public bool $active = false;
         };
 
@@ -198,7 +211,8 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_handles_array_values(): void
     {
-        $command = new class {
+        $command = new class
+        {
             public array $ids = [1, 2, 3];
         };
 
@@ -210,8 +224,10 @@ class CacheKeyGeneratorTest extends TestCase
     #[Test]
     public function it_generates_same_hash_for_same_properties(): void
     {
-        $command = new class {
+        $command = new class
+        {
             public string $name = 'Hassan';
+
             public int $age = 30;
         };
 

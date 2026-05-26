@@ -4,6 +4,7 @@ namespace Nactu\Middlewares;
 
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Sleep;
 use Illuminate\Validation\ValidationException;
 
 class CommandRetrier
@@ -40,7 +41,7 @@ class CommandRetrier
 
                 if (app()->runningInConsole()) {
                     $delay = min(2 ** ($attempt - 1), $this->maxBackoff);
-                    sleep($delay);
+                    Sleep::sleep($delay);
                 }
 
                 logger()->warning('Command retry', [

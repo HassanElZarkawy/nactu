@@ -37,7 +37,14 @@
   },
   "require-dev": {
     "driftingly/rector-laravel": "^2.4",
+    "laravel/pint": "^1.29",
     "orchestra/testbench": "^11.1",
     "phpunit/phpunit": "^13.1"
+  },
+  "scripts": {
+    "format": [
+      "./vendor/bin/rector",
+      "./vendor/bin/pint"
+    ]
   }
 }

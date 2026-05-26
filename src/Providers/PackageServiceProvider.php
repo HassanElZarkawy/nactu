@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Nactu\Providers;
 
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Nactu\CommandBus;
 use Nactu\CommandBusInterface;
 use Nactu\Console\MakeCommandCommand;
@@ -20,7 +21,6 @@ use Nactu\QueryBus;
 use Nactu\QueryBusInterface;
 use Nactu\Services\BusDispatcher;
 use Nactu\Services\CacheKeyGenerator;
-use Psr\Log\LoggerInterface;
 
 final class PackageServiceProvider extends ServiceProvider
 {
@@ -100,11 +100,11 @@ final class PackageServiceProvider extends ServiceProvider
         /** @var CommandBusInterface $commandBus */
         $commandBus = $this->app->make(CommandBusInterface::class);
 
-        if ($this->app['config']->get("$this->configKey.retry.enabled", true)) {
+        if ($this->app->make(Repository::class)->get("$this->configKey.retry.enabled", true)) {
             $commandBus->addMiddleware($this->app->make(CommandRetrier::class));
         }
 
-        if ($this->app['config']->get("$this->configKey.performance.enabled", true)) {
+        if ($this->app->make(Repository::class)->get("$this->configKey.performance.enabled", true)) {
             $commandBus->addMiddleware($this->app->make(PerformanceMonitor::class));
         }
     }
@@ -117,11 +117,11 @@ final class PackageServiceProvider extends ServiceProvider
         /** @var QueryBusInterface $queryBus */
         $queryBus = $this->app->make(QueryBusInterface::class);
 
-        if ($this->app['config']->get("$this->configKey.cache.enabled", true)) {
+        if ($this->app->make(Repository::class)->get("$this->configKey.cache.enabled", true)) {
             $queryBus->addMiddleware($this->app->make(CacheQueryMiddleware::class));
         }
 
-        if ($this->app['config']->get("$this->configKey.performance.enabled", true)) {
+        if ($this->app->make(Repository::class)->get("$this->configKey.performance.enabled", true)) {
             $queryBus->addMiddleware($this->app->make(PerformanceMonitor::class));
         }
     }

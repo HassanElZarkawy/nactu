@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Log\LogManager;
+use Illuminate\Validation\ValidationException;
 use Nactu\Middlewares\CommandRetrier;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +19,8 @@ class CommandRetrierTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->app = Container::setInstance(new class extends Container {
+        $this->app = Container::setInstance(new class extends Container
+        {
             public function runningInConsole(): bool
             {
                 return false;
@@ -89,11 +91,12 @@ class CommandRetrierTest extends TestCase
         try {
             ($retrier)($command, function () use (&$attempt): never {
                 $attempt++;
-                throw new class extends \Illuminate\Validation\ValidationException {
+                throw new class extends ValidationException
+                {
                     public function __construct() {}
                 };
             });
-        } catch (\Illuminate\Validation\ValidationException) {
+        } catch (ValidationException) {
             $this->assertSame(1, $attempt);
 
             return;

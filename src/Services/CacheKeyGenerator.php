@@ -94,6 +94,7 @@ class CacheKeyGenerator
     /**
      * Extract properties from an object using reflection with per-class caching
      * Reflection is done once per class, subsequent calls reuse cached property list
+     *
      * @throws ReflectionException
      */
     private function extractProperties(object $object): array

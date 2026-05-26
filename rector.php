@@ -18,15 +18,3 @@ return RectorConfig::configure()
         LaravelSetList::LARAVEL_FACADE_ALIASES_TO_FULL_NAMES,
         LaravelSetList::LARAVEL_TESTING,
     ]);
-//    ->withSkip([
-//        //
-//    ])
-//    ->withPreparedSets(
-//        deadCode: true,
-//        codeQuality: true,
-//        typeDeclarations: true,
-//        privatization: true,
-//        earlyReturn: true,
-//        strictBooleans: true,
-//    )
-//    ->withPhpSets();
