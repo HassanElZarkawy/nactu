@@ -1,0 +1,13 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ queryNamespace }}\{{ queryClass }};
+
+class {{ class }}
+{
+    public function handle({{ queryClass }} $query): mixed
+    {
+        //
+    }
+}

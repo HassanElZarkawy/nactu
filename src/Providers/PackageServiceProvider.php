@@ -11,10 +11,14 @@ use Nactu\CommandBus;
 use Nactu\CommandBusInterface;
 use Nactu\Console\MakeCommandCommand;
 use Nactu\Console\MakeHandlerCommand;
+use Nactu\Console\MakeQueryCommand;
+use Nactu\Console\MakeQueryHandlerCommand;
 use Nactu\Middlewares\CacheQueryMiddleware;
 use Nactu\Middlewares\CommandRetrier;
 use Nactu\Middlewares\PerformanceMonitor;
-use Nactu\Services\CacheInvalidationService;
+use Nactu\QueryBus;
+use Nactu\QueryBusInterface;
+use Nactu\Services\BusDispatcher;
 use Nactu\Services\CacheKeyGenerator;
 use Psr\Log\LoggerInterface;
 
@@ -29,19 +33,27 @@ final class PackageServiceProvider extends ServiceProvider
         );
 
         $this->app->singleton(CommandBusInterface::class, fn ($app): CommandBus => new CommandBus(
-            $app,
-            $app['config']->get("{$this->configKey}.auto_discover.enabled", true),
-            $app['config']->get("{$this->configKey}.auto_discover.commands_namespace", 'App\\Commands'),
-            $app['config']->get("{$this->configKey}.auto_discover.handlers_namespace", 'App\\Handlers'),
+            new BusDispatcher(
+                $app,
+                $app['config']->get("$this->configKey.auto_discover.enabled", true),
+                $app['config']->get("$this->configKey.auto_discover.commands_namespace", 'App\\Commands'),
+                $app['config']->get("$this->configKey.auto_discover.handlers_namespace", 'App\\Handlers'),
+                'Command',
+            ),
+        ));
+
+        $this->app->singleton(QueryBusInterface::class, fn ($app): QueryBus => new QueryBus(
+            new BusDispatcher(
+                $app,
+                $app['config']->get("$this->configKey.auto_discover.enabled", true),
+                $app['config']->get("$this->configKey.auto_discover.queries_namespace", 'App\\Queries'),
+                $app['config']->get("$this->configKey.auto_discover.query_handlers_namespace", 'App\\QueryHandlers'),
+                'Query',
+            ),
         ));
 
         $this->app->singleton(CacheKeyGenerator::class, fn ($app): CacheKeyGenerator => new CacheKeyGenerator(
             $app['config']->get("$this->configKey.cache_key.separator", ':'),
-        ));
-
-        $this->app->singleton(CacheInvalidationService::class, fn ($app): CacheInvalidationService => new CacheInvalidationService(
-            $app->make(CacheRepository::class),
-            $app->make(LoggerInterface::class),
         ));
 
         $this->app->singleton(CacheQueryMiddleware::class, fn ($app): CacheQueryMiddleware => new CacheQueryMiddleware(
@@ -69,37 +81,53 @@ final class PackageServiceProvider extends ServiceProvider
             __DIR__.'/../../config/nactu.php' => $this->app->configPath('nactu.php'),
         ], 'nactu-config');
 
-        $this->registerMiddleware();
+        $this->registerCommandBusMiddleware();
+        $this->registerQueryBusMiddleware();
 
         $this->commands([
             MakeCommandCommand::class,
             MakeHandlerCommand::class,
+            MakeQueryCommand::class,
+            MakeQueryHandlerCommand::class,
         ]);
     }
 
     /**
      * @throws BindingResolutionException
      */
-    protected function registerMiddleware(): void
+    protected function registerCommandBusMiddleware(): void
     {
         /** @var CommandBusInterface $commandBus */
         $commandBus = $this->app->make(CommandBusInterface::class);
 
-        if ($this->app['config']->get("$this->configKey.cache.enabled", true)) {
-            $commandBus->addMiddleware($this->app->make(CacheQueryMiddleware::class));
+        if ($this->app['config']->get("$this->configKey.retry.enabled", true)) {
+            $commandBus->addMiddleware($this->app->make(CommandRetrier::class));
         }
 
         if ($this->app['config']->get("$this->configKey.performance.enabled", true)) {
             $commandBus->addMiddleware($this->app->make(PerformanceMonitor::class));
         }
+    }
 
-        if ($this->app['config']->get("$this->configKey.retry.enabled", true)) {
-            $commandBus->addMiddleware($this->app->make(CommandRetrier::class));
+    /**
+     * @throws BindingResolutionException
+     */
+    protected function registerQueryBusMiddleware(): void
+    {
+        /** @var QueryBusInterface $queryBus */
+        $queryBus = $this->app->make(QueryBusInterface::class);
+
+        if ($this->app['config']->get("$this->configKey.cache.enabled", true)) {
+            $queryBus->addMiddleware($this->app->make(CacheQueryMiddleware::class));
+        }
+
+        if ($this->app['config']->get("$this->configKey.performance.enabled", true)) {
+            $queryBus->addMiddleware($this->app->make(PerformanceMonitor::class));
         }
     }
 
     public function provides(): array
     {
-        return [CommandBusInterface::class];
+        return [CommandBusInterface::class, QueryBusInterface::class];
     }
 }

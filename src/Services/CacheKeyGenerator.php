@@ -2,6 +2,9 @@
 
 namespace Nactu\Services;
 
+use ReflectionClass;
+use ReflectionException;
+
 /**
  * Generates deterministic, collision-resistant cache keys from objects
  */
@@ -18,6 +21,8 @@ class CacheKeyGenerator
     private string $keySeparator;
 
     private array $classNameCache = [];
+
+    private array $propertyCache = [];
 
     public function __construct(string $keySeparator = ':')
     {
@@ -87,17 +92,28 @@ class CacheKeyGenerator
     }
 
     /**
-     * Extract properties from an object using native get_object_vars
-     * Much faster than reflection (100-500x speedup)
+     * Extract properties from an object using reflection with per-class caching
+     * Reflection is done once per class, subsequent calls reuse cached property list
+     * @throws ReflectionException
      */
     private function extractProperties(object $object): array
     {
+        $class = $object::class;
 
-        // get_object_vars only gets public properties, perfect for our command objects
-        // Skip null values to keep keys shorter
-        $properties = array_filter(get_object_vars($object), fn ($value) => $value !== null);
+        if (! isset($this->propertyCache[$class])) {
+            $this->propertyCache[$class] = new ReflectionClass($class)->getProperties();
+        }
 
-        // Sort by key for deterministic ordering
+        $properties = [];
+
+        foreach ($this->propertyCache[$class] as $property) {
+            $value = $property->getValue($object);
+
+            if ($value !== null) {
+                $properties[$property->getName()] = $value;
+            }
+        }
+
         ksort($properties);
 
         return $properties;

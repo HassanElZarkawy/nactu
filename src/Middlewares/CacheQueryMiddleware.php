@@ -22,7 +22,7 @@ readonly class CacheQueryMiddleware
      */
     public function __invoke(object $command, callable $next): mixed
     {
-        if (! $command instanceof CacheableQuery) {
+        if (! $command instanceof CacheableQuery || $command->shouldBypassCache()) {
             return $next($command);
         }
 

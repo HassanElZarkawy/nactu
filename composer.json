@@ -34,5 +34,10 @@
     "sort-packages": true,
     "preferred-install": "dist",
     "optimize-autoloader": true
+  },
+  "require-dev": {
+    "driftingly/rector-laravel": "^2.4",
+    "orchestra/testbench": "^11.1",
+    "phpunit/phpunit": "^13.1"
   }
 }
