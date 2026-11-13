@@ -1,6 +1,17 @@
 parameters:
-  level: 1
+  level: 8
   paths:
     - src
     - config
     - tests
+  ignoreErrors:
+    # Testbench/laravel testing APIs expose loose union types
+    - message: '#Cannot call method assertSuccessful\(\) on Illuminate\\Testing\\PendingCommand\|int\.#'
+      paths:
+        - tests
+    - message: '#Cannot call method (make|instance)\(\) on Illuminate\\Foundation\\Application\|null\.#'
+      paths:
+        - tests
+    - message: '#PackageServiceProvider constructor expects Illuminate\\Contracts\\Foundation\\Application, Illuminate\\Foundation\\Application\|null given\.#'
+      paths:
+        - tests

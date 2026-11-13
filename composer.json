@@ -3,7 +3,6 @@
   "description": "A Command Bus implementation with middleware pipeline, query caching, and retry support for Laravel",
   "type": "library",
   "license": "MIT",
-  "version": "0.0.1",
   "authors": [
     {
       "role": "Developer",
@@ -24,9 +23,10 @@
   },
   "require": {
     "php": "^8.4",
-    "illuminate/contracts": "^13.11",
-    "illuminate/support": "^13.11",
-    "laravel/framework": "^13.11"
+    "illuminate/cache": "^13.11",
+    "illuminate/console": "^13.11",
+    "illuminate/container": "^13.11",
+    "illuminate/support": "^13.11"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -42,9 +42,13 @@
     "phpunit/phpunit": "^13.1"
   },
   "scripts": {
+    "analyse": "./vendor/bin/phpstan analyse",
+    "bench": "@php benchmarks/bench.php",
     "format": [
       "./vendor/bin/rector",
       "./vendor/bin/pint"
-    ]
+    ],
+    "test": "./vendor/bin/phpunit --do-not-record-test-run-history",
+    "test-coverage": "php -d pcov.directory=src ./vendor/bin/phpunit --coverage-text --do-not-record-test-run-history"
   }
 }
