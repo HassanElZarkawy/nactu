@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nactu\Middlewares;
 
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Cache\Repository as CacheRepository;
 use Nactu\Contracts\CacheableQuery;
 use Nactu\Services\CacheKeyGenerator;
 
@@ -14,7 +16,8 @@ readonly class CacheQueryMiddleware
     public function __construct(
         private CacheRepository $cache,
         private CacheKeyGenerator $keyGenerator,
-        private int $defaultTtl = 300
+        private int $defaultTtl = 300,
+        private ?string $prefix = null,
     ) {}
 
     /**
@@ -26,7 +29,7 @@ readonly class CacheQueryMiddleware
             return $next($command);
         }
 
-        $cacheKey = $this->keyGenerator->generateFromCommand($command);
+        $cacheKey = $this->keyGenerator->generateFromCommand($command, $this->prefix);
         $tags = $command->getCacheTags();
         $ttl = $command->getCacheTtl() ?? $this->defaultTtl;
 
@@ -35,7 +38,7 @@ readonly class CacheQueryMiddleware
         return $cacheStore->remember(
             $cacheKey,
             $ttl,
-            fn () => $next($command)
+            fn (): mixed => $next($command)
         );
     }
 }

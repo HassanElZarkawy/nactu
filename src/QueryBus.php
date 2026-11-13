@@ -17,6 +17,10 @@ readonly class QueryBus implements QueryBusInterface
         return $this->dispatcher->dispatch($query);
     }
 
+    /**
+     * @param  class-string  $queryClass
+     * @param  class-string  $handlerClass
+     */
     public function register(string $queryClass, string $handlerClass): void
     {
         $this->dispatcher->register($queryClass, $handlerClass);

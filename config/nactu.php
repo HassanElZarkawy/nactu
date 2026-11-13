@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\ValidationException;
+
 return [
 
     'auto_discover' => [
@@ -7,11 +10,19 @@ return [
 
         'commands_namespace' => env('NACTU_AUTO_DISCOVER_COMMANDS_NAMESPACE', 'App\\Commands'),
 
-        'handlers_namespace' => env('NACTU_AUTO_DISCOVER_HANDLERS_NAMESPACE', 'App\\Handlers'),
+        'handlers_namespace' => env('NACTU_AUTO_DISCOVER_HANDLERS_NAMESPACE', 'App\\Commands'),
 
         'queries_namespace' => env('NACTU_AUTO_DISCOVER_QUERIES_NAMESPACE', 'App\\Queries'),
 
-        'query_handlers_namespace' => env('NACTU_AUTO_DISCOVER_QUERY_HANDLERS_NAMESPACE', 'App\\QueryHandlers'),
+        'query_handlers_namespace' => env('NACTU_AUTO_DISCOVER_QUERY_HANDLERS_NAMESPACE', 'App\\Queries'),
+    ],
+
+    'handlers' => [
+        // Reuse one handler instance per handler class across dispatches
+        // (handlers effectively become container singletons). Reduces
+        // per-dispatch construction cost, but stateful handlers will keep
+        // their state between dispatches.
+        'singleton' => (bool) env('NACTU_HANDLERS_SINGLETON', false),
     ],
 
     'cache' => [
@@ -30,6 +41,12 @@ return [
         'max_attempts' => (int) env('NACTU_RETRY_MAX_ATTEMPTS', 3),
 
         'max_backoff' => (int) env('NACTU_RETRY_MAX_BACKOFF', 3),
+
+        // Exceptions that should never be retried
+        'except' => [
+            ValidationException::class,
+            ModelNotFoundException::class,
+        ],
     ],
 
     'performance' => [

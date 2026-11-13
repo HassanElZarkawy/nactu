@@ -17,6 +17,10 @@ readonly class CommandBus implements CommandBusInterface
         return $this->dispatcher->dispatch($command);
     }
 
+    /**
+     * @param  class-string  $commandClass
+     * @param  class-string  $handlerClass
+     */
     public function register(string $commandClass, string $handlerClass): void
     {
         $this->dispatcher->register($commandClass, $handlerClass);

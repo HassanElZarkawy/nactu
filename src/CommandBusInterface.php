@@ -13,6 +13,9 @@ interface CommandBusInterface
 
     /**
      * Register a handler for a command
+     *
+     * @param  class-string  $commandClass
+     * @param  class-string  $handlerClass
      */
     public function register(string $commandClass, string $handlerClass): void;
 
