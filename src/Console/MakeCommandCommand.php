@@ -4,73 +4,31 @@ declare(strict_types=1);
 
 namespace Nactu\Console;
 
-use Illuminate\Console\GeneratorCommand;
-use Illuminate\Support\Str;
-use Symfony\Component\Console\Input\InputOption;
-
-class MakeCommandCommand extends GeneratorCommand
+class MakeCommandCommand extends BusGenerator
 {
-    protected $name = 'make:command';
+    protected $name = 'nactu:command';
 
     protected $description = 'Create a new command and its handler';
 
     protected $type = 'Command';
 
-    protected function getStub(): string
+    protected function classSuffix(): string
     {
-        return $this->option('cacheable')
-            ? __DIR__.'/stubs/query-command.stub'
-            : __DIR__.'/stubs/command.stub';
+        return 'Command';
     }
 
-    protected function getDefaultNamespace($rootNamespace): string
+    protected function namespaceSegment(): string
     {
-        return $rootNamespace.'\Commands';
+        return 'Commands';
     }
 
-    protected function getNameInput(): string
+    protected function handlerType(): string
     {
-        $name = parent::getNameInput();
-
-        if (! Str::endsWith($name, 'Command')) {
-            $name .= 'Command';
-        }
-
-        return $name;
+        return 'Handler';
     }
 
-    public function handle(): int
+    protected function subjectVariable(): string
     {
-        $commandResult = parent::handle();
-
-        if ($commandResult === self::FAILURE) {
-            return self::FAILURE;
-        }
-
-        $this->createHandler();
-
-        return self::SUCCESS;
-    }
-
-    protected function createHandler(): void
-    {
-        $name = $this->getNameInput();
-        $commandClass = Str::afterLast($name, '\\');
-        $handlerClass = Str::replaceLast('Command', 'Handler', $commandClass);
-
-        $handlerName = Str::replaceLast($commandClass, $handlerClass, $name);
-
-        $this->call(MakeHandlerCommand::class, [
-            'name' => $handlerName,
-            '--command' => $commandClass,
-        ]);
-    }
-
-    protected function getOptions(): array
-    {
-        return [
-            ['cacheable', 'c', InputOption::VALUE_NONE, 'Create a cacheable query command'],
-            ['force', 'f', InputOption::VALUE_NONE, 'Create the class even if it already exists'],
-        ];
+        return 'command';
     }
 }

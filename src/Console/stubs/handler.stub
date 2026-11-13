@@ -2,11 +2,9 @@
 
 namespace {{ namespace }};
 
-use {{ commandNamespace }}\{{ commandClass }};
-
 class {{ class }}
 {
-    public function handle({{ commandClass }} $command): mixed
+    public function handle({{ subjectClass }} ${{ subjectVariable }}): mixed
     {
         //
     }
