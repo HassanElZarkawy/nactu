@@ -7,14 +7,14 @@ Queries represent **read operations** — they fetch data without modifying stat
 Use the artisan command to generate a query and its handler:
 
 ```bash
-php artisan make:query ListUsers
+php artisan nactu:query ListUsers
 ```
 
-This creates two files:
+This creates a use-case folder containing two files:
 
-**`App\Queries\ListUsersQuery`**
+**`App\Queries\ListUsers\ListUsersQuery`**
 ```php
-namespace App\Queries;
+namespace App\Queries\ListUsers;
 
 readonly class ListUsersQuery
 {
@@ -25,11 +25,9 @@ readonly class ListUsersQuery
 }
 ```
 
-**`App\QueryHandlers\ListUsersHandler`**
+**`App\Queries\ListUsers\ListUsersHandler`**
 ```php
-namespace App\QueryHandlers;
-
-use App\Queries\ListUsersQuery;
+namespace App\Queries\ListUsers;
 
 class ListUsersHandler
 {
@@ -41,6 +39,8 @@ class ListUsersHandler
     }
 }
 ```
+
+The handler shares the query's namespace, so no `use` import is needed. Segments before the last one group related use cases: `php artisan nactu:query User/GetUserByCriteria` generates `App\Queries\User\GetUserByCriteria\{GetUserByCriteriaQuery, GetUserByCriteriaHandler}`.
 
 ## Dispatching Queries
 
@@ -68,13 +68,13 @@ class UserController extends Controller
 Add the `--cacheable` (or `-c`) flag to generate a query that implements `CacheableQuery`:
 
 ```bash
-php artisan make:query ListUsers -c
+php artisan nactu:query ListUsers -c
 ```
 
 This generates a query with caching methods:
 
 ```php
-namespace App\Queries;
+namespace App\Queries\ListUsers;
 
 use Nactu\Contracts\CacheableQuery;
 
@@ -123,7 +123,7 @@ public function getCacheTags(): array
 }
 ```
 
-> **Note:** Cache tags require a cache driver that supports tagging (e.g., Redis, Memcached, Database). The `file` and `array` drivers do not support tags.
+> **Note:** Cache tags require a cache driver that supports tagging — Redis, Memcached, database, and `array` do; `file`, `dynamodb`, and `octane` do not.
 
 ### Bypassing Cache
 

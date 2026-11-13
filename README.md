@@ -5,7 +5,7 @@ A lightweight CQRS package for Laravel with command/query bus, middleware pipeli
 ## Requirements
 
 - PHP 8.4+
-- Laravel 11+
+- Laravel 13+
 
 ## Installation
 
@@ -26,12 +26,12 @@ php artisan vendor:publish --tag=nactu-config
 Create a command and its handler:
 
 ```bash
-php artisan make:command CreateUser
+php artisan nactu:command CreateUser
 ```
 
 This generates:
-- `App\Commands\CreateUserCommand`
-- `App\Handlers\CreateUserHandler`
+- `App\Commands\CreateUser\CreateUserCommand`
+- `App\Commands\CreateUser\CreateUserHandler`
 
 Dispatch it:
 
@@ -52,12 +52,12 @@ public function store(CommandBusInterface $bus): void
 Create a query and its handler:
 
 ```bash
-php artisan make:query ListUsers
+php artisan nactu:query ListUsers
 ```
 
 This generates:
-- `App\Queries\ListUsersQuery`
-- `App\QueryHandlers\ListUsersHandler`
+- `App\Queries\ListUsers\ListUsersQuery`
+- `App\Queries\ListUsers\ListUsersHandler`
 
 Dispatch it:
 

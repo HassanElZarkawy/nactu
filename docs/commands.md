@@ -7,14 +7,14 @@ Commands represent **write operations** — things that change state. They are d
 Use the artisan command to generate a command and its handler:
 
 ```bash
-php artisan make:command CreateUser
+php artisan nactu:command CreateUser
 ```
 
-This creates two files:
+This creates a use-case folder containing two files:
 
-**`App\Commands\CreateUserCommand`**
+**`App\Commands\CreateUser\CreateUserCommand`**
 ```php
-namespace App\Commands;
+namespace App\Commands\CreateUser;
 
 readonly class CreateUserCommand
 {
@@ -25,11 +25,9 @@ readonly class CreateUserCommand
 }
 ```
 
-**`App\Handlers\CreateUserHandler`**
+**`App\Commands\CreateUser\CreateUserHandler`**
 ```php
-namespace App\Handlers;
-
-use App\Commands\CreateUserCommand;
+namespace App\Commands\CreateUser;
 
 class CreateUserHandler
 {
@@ -39,6 +37,8 @@ class CreateUserHandler
     }
 }
 ```
+
+The handler shares the command's namespace, so no `use` import is needed. Segments before the last one group related use cases: `php artisan nactu:command Admin/CreateUser` generates `App\Commands\Admin\CreateUser\{CreateUserCommand, CreateUserHandler}`.
 
 ## Dispatching Commands
 

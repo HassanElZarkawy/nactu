@@ -1,27 +1,30 @@
 # Console Commands
 
-Nactu provides Artisan commands to generate commands, queries, and their handlers.
+Nactu provides two Artisan commands to generate commands, queries, and their handlers.
 
-## make:command
+Every use case lives in its own folder: the **last name segment is the use case**, any preceding segments are grouping namespaces. The message class and its handler are generated side by side inside that folder, sharing one namespace.
+
+## nactu:command
 
 Generate a command and its handler:
 
 ```bash
-php artisan make:command CreateUser
+php artisan nactu:command CreateUser
 ```
 
 **Options:**
 
-| Option        | Flag | Description                        |
-|---------------|------|------------------------------------|
-| `--force`     | `-f` | Overwrite existing files           |
-| `--cacheable` | `-c` | Generate a cacheable query command |
+| Option          | Flag | Description                                          |
+|-----------------|------|------------------------------------------------------|
+| `--force`       | `-f` | Overwrite existing files                             |
+| `--cacheable`   | `-c` | Generate a cacheable command                         |
+| `--handler-only`|      | Generate only the handler, not the command class     |
 
 ### Generated Files
 
-**`app/Commands/CreateUserCommand.php`**
+**`app/Commands/CreateUser/CreateUserCommand.php`**
 ```php
-namespace App\Commands;
+namespace App\Commands\CreateUser;
 
 readonly class CreateUserCommand
 {
@@ -31,11 +34,9 @@ readonly class CreateUserCommand
 }
 ```
 
-**`app/Handlers/CreateUserHandler.php`**
+**`app/Commands/CreateUser/CreateUserHandler.php`**
 ```php
-namespace App\Handlers;
-
-use App\Commands\CreateUserCommand;
+namespace App\Commands\CreateUser;
 
 class CreateUserHandler
 {
@@ -46,36 +47,65 @@ class CreateUserHandler
 }
 ```
 
-### Cacheable Command
+The handler shares the command's namespace, so no `use` import is needed.
 
-The `--cacheable` flag generates a command that implements `CacheableQuery`. Useful when a command is also used as a query:
+### Domain Grouping
+
+Segments before the last one group related use cases:
 
 ```bash
-php artisan make:command FindUser -c
+php artisan nactu:command Admin/CreateUser
+# → app/Commands/Admin/CreateUser/CreateUserCommand.php
+# → app/Commands/Admin/CreateUser/CreateUserHandler.php
+```
+
+```bash
+php artisan nactu:command Billing/Invoice/SendInvoice
+# → app/Commands/Billing/Invoice/SendInvoice/SendInvoiceCommand.php
+# → app/Commands/Billing/Invoice/SendInvoice/SendInvoiceHandler.php
+```
+
+### Cacheable Command
+
+The `--cacheable` flag generates a command that implements `CacheableQuery`:
+
+```bash
+php artisan nactu:command FindUser -c
 ```
 
 This generates a command with caching methods (`getCacheTtl`, `getCacheTags`, `shouldBypassCache`).
 
-## make:query
+### Handler Only
+
+Generate just the handler for an existing command:
+
+```bash
+php artisan nactu:command CreateUser --handler-only
+```
+
+This creates `App\Commands\CreateUser\CreateUserHandler` without touching the command class.
+
+## nactu:query
 
 Generate a query and its handler:
 
 ```bash
-php artisan make:query ListUsers
+php artisan nactu:query ListUsers
 ```
 
 **Options:**
 
-| Option        | Flag | Description                |
-|---------------|------|----------------------------|
-| `--force`     | `-f` | Overwrite existing files   |
-| `--cacheable` | `-c` | Generate a cacheable query |
+| Option          | Flag | Description                                          |
+|-----------------|------|------------------------------------------------------|
+| `--force`       | `-f` | Overwrite existing files                             |
+| `--cacheable`   | `-c` | Generate a cacheable query                           |
+| `--handler-only`|      | Generate only the handler, not the query class       |
 
 ### Generated Files
 
-**`app/Queries/ListUsersQuery.php`**
+**`app/Queries/ListUsers/ListUsersQuery.php`**
 ```php
-namespace App\Queries;
+namespace App\Queries\ListUsers;
 
 readonly class ListUsersQuery
 {
@@ -85,11 +115,9 @@ readonly class ListUsersQuery
 }
 ```
 
-**`app/QueryHandlers/ListUsersHandler.php`**
+**`app/Queries/ListUsers/ListUsersHandler.php`**
 ```php
-namespace App\QueryHandlers;
-
-use App\Queries\ListUsersQuery;
+namespace App\Queries\ListUsers;
 
 class ListUsersHandler
 {
@@ -105,12 +133,12 @@ class ListUsersHandler
 The `--cacheable` flag generates a query that implements `CacheableQuery`:
 
 ```bash
-php artisan make:query ListUsers -c
+php artisan nactu:query ListUsers -c
 ```
 
-**`app/Queries/ListUsersQuery.php`**
+**`app/Queries/ListUsers/ListUsersQuery.php`**
 ```php
-namespace App\Queries;
+namespace App\Queries\ListUsers;
 
 use Nactu\Contracts\CacheableQuery;
 
@@ -139,13 +167,24 @@ readonly class ListUsersQuery implements CacheableQuery
 
 ## Naming Conventions
 
-The commands automatically enforce naming conventions:
+The commands automatically enforce naming conventions. The last input segment becomes the use-case folder; the `Command` / `Query` suffix is appended to the class inside it:
 
-| Input                            | Class Name          | File                             |
-|----------------------------------|---------------------|----------------------------------|
-| `make:command CreateUser`        | `CreateUserCommand` | `Commands/CreateUserCommand.php` |
-| `make:command CreateUserCommand` | `CreateUserCommand` | `Commands/CreateUserCommand.php` |
-| `make:query ListUsers`           | `ListUsersQuery`    | `Queries/ListUsersQuery.php`     |
-| `make:query ListUsersQuery`      | `ListUsersQuery`    | `Queries/ListUsersQuery.php`     |
+| Input                              | Use-case folder    | Generated classes                                          |
+|------------------------------------|--------------------|------------------------------------------------------------|
+| `nactu:command CreateUser`         | `Commands/CreateUser/` | `CreateUserCommand` + `CreateUserHandler`              |
+| `nactu:command CreateUserCommand`  | `Commands/CreateUser/` | `CreateUserCommand` + `CreateUserHandler`              |
+| `nactu:command Admin/CreateUser`   | `Commands/Admin/CreateUser/` | `CreateUserCommand` + `CreateUserHandler`        |
+| `nactu:query ListUsers`            | `Queries/ListUsers/` | `ListUsersQuery` + `ListUsersHandler`                   |
+| `nactu:query User/GetUserByCriteria` | `Queries/User/GetUserByCriteria/` | `GetUserByCriteriaQuery` + `GetUserByCriteriaHandler` |
 
-The `Command` / `Query` suffix is added automatically if not provided.
+The handler name is always derived from the message class by replacing the suffix (`XCommand` → `XHandler`, `XQuery` → `XHandler`). Providing the suffix in the input is optional — `CreateUser` and `CreateUserCommand` produce identical output.
+
+## Already-Qualified Names
+
+If the name starts with the root namespace (`App\...`), it is used as-is — only the missing suffix is appended. The use-case folder expansion is skipped:
+
+```bash
+php artisan nactu:command App\Commands\Legacy\ExportCommand
+# → app/Commands/Legacy/ExportCommand.php
+# → app/Commands/Legacy/ExportHandler.php
+```

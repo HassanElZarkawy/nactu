@@ -36,17 +36,23 @@ Automatically retries commands that throw exceptions.
 
 **Features:**
 - Exponential backoff (only in console)
-- Skips `ValidationException` and `ModelNotFoundException`
+- Configurable non-retryable exceptions
 - Configurable max attempts and backoff
 
 ```php
 // Configured in config/nactu.php
 'retry' => [
     'enabled' => true,
-    'max_attempts' => 3,
-    'max_backoff' => 3,  // max seconds to sleep between retries
+    'max_attempts' => 3,   // total attempts: the original attempt plus retries
+    'max_backoff' => 3,    // max seconds to sleep between retries
+    'except' => [          // exceptions that are never retried
+        \Illuminate\Validation\ValidationException::class,
+        \Illuminate\Database\Eloquent\ModelNotFoundException::class,
+    ],
 ],
 ```
+
+> **Note:** `max_attempts` is the **total** number of attempts. The default of `3` means one original attempt plus two retries.
 
 **Retry behavior:**
 
@@ -65,12 +71,26 @@ class ProcessPaymentHandler
 
 **Non-retryable exceptions:**
 
+Exceptions listed in `retry.except` are never retried:
+
 ```php
 // ValidationException — never retried
 throw ValidationException::withMessages(['email' => 'Invalid email']);
 
 // ModelNotFoundException — never retried
 throw (new ModelNotFoundException)->setModel(User::class);
+```
+
+Add your own exceptions to the list in `config/nactu.php`:
+
+```php
+'retry' => [
+    // ...
+    'except' => [
+        \Illuminate\Validation\ValidationException::class,
+        \App\Exceptions\IrrecoverableException::class,
+    ],
+],
 ```
 
 ## CacheQueryMiddleware

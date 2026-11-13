@@ -7,7 +7,7 @@ Queries that implement the `CacheableQuery` interface are automatically cached b
 The `CacheKeyGenerator` creates deterministic, collision-resistant keys from query objects:
 
 ```
-prefix:query_name:property_hash
+prefix:fully_qualified_class_name:property_hash
 ```
 
 **Example:**
@@ -16,13 +16,13 @@ prefix:query_name:property_hash
 $query = new ListUsersQuery(status: 'active', page: 2);
 
 // Generated key (example):
-// nactu:list_users:8a3f1b2c
+// nactu:app_queries_list_users:3f2b9c1d8e4a7f601b2c3d4e5f6a7b8c9d
 ```
 
 The key is generated from:
-1. **Class name** — converted to snake_case, suffixes removed (`ListUsersQuery` → `list_users`)
-2. **All properties** — including private/protected, serialized and hashed via CRC32
-3. **Prefix** — optional, passed as second argument to `generateFromCommand`
+1. **Fully-qualified class name** — converted to snake_case, suffixes removed, namespace preserved (`App\Queries\ListUsersQuery` → `app_queries_list_users`). The namespace is included so two classes sharing a short name can never collide.
+2. **All properties** — including private/protected, serialized and hashed with XXH128 (128-bit, so collisions are practically impossible)
+3. **Prefix** — taken from the `cache.prefix` config by the middleware, or passed as second argument to `generateFromCommand`
 
 ### Deterministic Keys
 
@@ -96,7 +96,7 @@ public function getCacheTags(): array
 }
 ```
 
-> **Note:** Tags require a cache driver that supports tagging (Redis, Memcached, Database). The `file` and `array` drivers do not support tags.
+> **Note:** Tags require a cache driver that supports tagging — Redis, Memcached, database, and `array` do; `file`, `dynamodb`, and `octane` do not. Calling `->tags()` on a non-taggable store throws an exception.
 
 ### Bypassing Cache
 
@@ -116,7 +116,7 @@ $users = $bus->dispatch(new ListUsersQuery(noCache: true));
 
 ## Cache Invalidation
 
-The `CacheInvalidationService` provides methods to invalidate cached query results.
+The `CacheInvalidationService` provides methods to invalidate cached query results. It resolves its cache store from the `cache.store` config (the default store when `null`) and its default TTL from `cache.default_ttl`.
 
 ### Invalidate by Tags
 
@@ -186,5 +186,5 @@ $key = $generator->forEntity('user', 42, 'profile');
 
 // For a list query
 $key = $generator->forList('users', ['status' => 'active'], page: 2);
-// → "users:list:<hash>:page:2"
+// → "users:list:<hash>:page_2"
 ```
