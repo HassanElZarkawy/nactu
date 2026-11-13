@@ -9,11 +9,16 @@ use Illuminate\Cache\Repository as CacheRepository;
 use Nactu\Contracts\CacheableQuery;
 use Nactu\Middlewares\CacheQueryMiddleware;
 use Nactu\Services\CacheKeyGenerator;
+use Nactu\Tests\Fixtures\Queries\CacheableListUsers\CacheableListUsersQuery;
+use Nactu\Tests\Fixtures\Queries\TaggedCacheable\TaggedCacheableQuery;
+use Nactu\Tests\Fixtures\Queries\Ttl\TtlQuery;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class CacheQueryMiddlewareTest extends TestCase
 {
+    private RecordingArrayStore $store;
+
     private CacheRepository $cache;
 
     private CacheKeyGenerator $keyGenerator;
@@ -22,7 +27,8 @@ class CacheQueryMiddlewareTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cache = new CacheRepository(new ArrayStore);
+        $this->store = new RecordingArrayStore;
+        $this->cache = new CacheRepository($this->store);
         $this->keyGenerator = new CacheKeyGenerator(':');
         $this->middleware = new CacheQueryMiddleware(
             $this->cache,
@@ -128,98 +134,97 @@ class CacheQueryMiddlewareTest extends TestCase
     #[Test]
     public function it_uses_custom_ttl_from_query(): void
     {
-        $query = new class implements CacheableQuery
-        {
-            public function getCacheTtl(): ?int
-            {
-                return 600;
-            }
+        $query = new TtlQuery(ttl: 600);
+        $cacheKey = $this->keyGenerator->generateFromCommand($query);
 
-            public function getCacheTags(): array
-            {
-                return [];
-            }
+        ($this->middleware)($query, fn (): string => 'result');
 
-            public function shouldBypassCache(): bool
-            {
-                return false;
-            }
-        };
-
-        $result = ($this->middleware)($query, fn () => 'result');
-
-        $this->assertSame('result', $result);
+        $this->assertSame(600, $this->store->secondsByKey[$cacheKey]);
     }
 
     #[Test]
     public function it_falls_back_to_default_ttl(): void
     {
-        $query = new class implements CacheableQuery
-        {
-            public function getCacheTtl(): ?int
-            {
-                return null;
-            }
+        $query = new CacheableListUsersQuery;
+        $cacheKey = $this->keyGenerator->generateFromCommand($query);
 
-            public function getCacheTags(): array
-            {
-                return [];
-            }
+        ($this->middleware)($query, fn (): string => 'result');
 
-            public function shouldBypassCache(): bool
-            {
-                return false;
-            }
-        };
-
-        $result = ($this->middleware)($query, fn () => 'result');
-
-        $this->assertSame('result', $result);
+        $this->assertSame(300, $this->store->secondsByKey[$cacheKey]);
     }
 
     #[Test]
-    public function it_returns_cached_result_on_second_call(): void
+    public function it_serves_identical_queries_from_cache(): void
     {
-        $queryA = new class implements CacheableQuery
-        {
-            public function getCacheTtl(): ?int
-            {
-                return 300;
-            }
+        $callCount = 0;
 
-            public function getCacheTags(): array
-            {
-                return [];
-            }
+        ($this->middleware)(new CacheableListUsersQuery, function () use (&$callCount): string {
+            $callCount++;
 
-            public function shouldBypassCache(): bool
-            {
-                return false;
-            }
-        };
+            return 'result_a';
+        });
 
-        $queryB = new class implements CacheableQuery
-        {
-            public function getCacheTtl(): ?int
-            {
-                return 300;
-            }
+        $result = ($this->middleware)(new CacheableListUsersQuery, function () use (&$callCount): string {
+            $callCount++;
 
-            public function getCacheTags(): array
-            {
-                return [];
-            }
+            return 'result_b';
+        });
 
-            public function shouldBypassCache(): bool
-            {
-                return false;
-            }
-        };
+        $this->assertSame('result_a', $result);
+        $this->assertSame(1, $callCount);
+    }
 
-        ($this->middleware)($queryA, fn () => 'result_a');
+    #[Test]
+    public function it_caches_tagged_queries(): void
+    {
+        $callCount = 0;
 
-        $result = ($this->middleware)($queryB, fn () => 'result_b');
+        $result1 = ($this->middleware)(new TaggedCacheableQuery, function () use (&$callCount): string {
+            $callCount++;
 
-        $this->assertNotSame('result_a', $result);
+            return 'tagged_result';
+        });
+
+        $result2 = ($this->middleware)(new TaggedCacheableQuery, function () use (&$callCount): string {
+            $callCount++;
+
+            return 'should_not_reach';
+        });
+
+        $this->assertSame('tagged_result', $result1);
+        $this->assertSame('tagged_result', $result2);
+        $this->assertSame(1, $callCount);
+    }
+
+    #[Test]
+    public function it_prefixes_cache_keys(): void
+    {
+        $middleware = new CacheQueryMiddleware(
+            $this->cache,
+            $this->keyGenerator,
+            300,
+            'nactu',
+        );
+
+        $query = new CacheableListUsersQuery;
+        $expectedKey = $this->keyGenerator->generateFromCommand($query, 'nactu');
+
+        $middleware($query, fn (): string => 'result');
+
+        $this->assertArrayHasKey($expectedKey, $this->store->secondsByKey);
+        $this->assertStringStartsWith('nactu:', $expectedKey);
+    }
+}
+
+final class RecordingArrayStore extends ArrayStore
+{
+    /** @var array<string, int> */
+    public array $secondsByKey = [];
+
+    public function put($key, $value, $seconds)
+    {
+        $this->secondsByKey[(string) $key] = (int) $seconds;
+
+        return parent::put($key, $value, $seconds);
     }
 }

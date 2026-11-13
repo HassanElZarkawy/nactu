@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nactu\Tests\Unit;
 
-use Illuminate\Container\Container;
 use Illuminate\Log\LogManager;
 use Nactu\Middlewares\PerformanceMonitor;
 use PHPUnit\Framework\Attributes\Test;
@@ -12,22 +11,6 @@ use PHPUnit\Framework\TestCase;
 
 class PerformanceMonitorTest extends TestCase
 {
-    private Container $app;
-
-    protected function setUp(): void
-    {
-        $this->app = Container::setInstance(new Container);
-
-        $logManager = $this->createMock(LogManager::class);
-        $this->app->instance('log', $logManager);
-        $this->app->alias('log', LogManager::class);
-    }
-
-    protected function tearDown(): void
-    {
-        Container::setInstance(null);
-    }
-
     #[Test]
     public function it_returns_result_from_handler(): void
     {
@@ -56,7 +39,10 @@ class PerformanceMonitorTest extends TestCase
     #[Test]
     public function it_does_not_log_fast_commands(): void
     {
-        $monitor = new PerformanceMonitor(1.0);
+        $logger = $this->createMock(LogManager::class);
+        $logger->expects($this->never())->method('warning');
+
+        $monitor = new PerformanceMonitor(1.0, $logger);
         $command = new class {};
 
         $result = ($monitor)($command, fn () => 'fast');
@@ -67,11 +53,10 @@ class PerformanceMonitorTest extends TestCase
     #[Test]
     public function it_logs_slow_commands(): void
     {
-        $logManager = $this->createMock(LogManager::class);
-        $logManager->expects($this->once())->method('warning');
-        $this->app->instance('log', $logManager);
+        $logger = $this->createMock(LogManager::class);
+        $logger->expects($this->once())->method('warning');
 
-        $monitor = new PerformanceMonitor(-1.0);
+        $monitor = new PerformanceMonitor(-1.0, $logger);
         $command = new class {};
 
         $result = ($monitor)($command, fn () => 'slow');

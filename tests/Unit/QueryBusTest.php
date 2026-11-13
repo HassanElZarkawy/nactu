@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace Nactu\Tests\Unit;
 
+use Illuminate\Cache\ArrayStore;
+use Illuminate\Cache\Repository as CacheRepository;
 use Illuminate\Container\Container;
 use InvalidArgumentException;
+use Nactu\Middlewares\CacheQueryMiddleware;
 use Nactu\QueryBus;
 use Nactu\QueryBusInterface;
 use Nactu\Services\BusDispatcher;
+use Nactu\Services\CacheKeyGenerator;
+use Nactu\Tests\Fixtures\Queries\GetUser\GetUserQuery;
+use Nactu\Tests\Fixtures\Queries\Ttl\TtlHandler;
+use Nactu\Tests\Fixtures\Queries\Ttl\TtlQuery;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -28,7 +35,20 @@ class QueryBusTest extends TestCase
                 $this->container,
                 $autoDiscover,
                 'App\\Queries',
-                'App\\QueryHandlers',
+                'App\\Queries',
+                'Query',
+            ),
+        );
+    }
+
+    private function createAutoDiscoveringQueryBus(): QueryBus
+    {
+        return new QueryBus(
+            new BusDispatcher(
+                $this->container,
+                true,
+                'Nactu\\Tests\\Fixtures\\Queries',
+                'Nactu\\Tests\\Fixtures\\Queries',
                 'Query',
             ),
         );
@@ -147,7 +167,7 @@ class QueryBusTest extends TestCase
         {
             public function handle(object $query): string
             {
-                return 'Hello, '.$query->name;
+                return 'Hello, '.(property_exists($query, 'name') ? $query->name : '');
             }
         };
 
@@ -276,5 +296,36 @@ class QueryBusTest extends TestCase
 
         $this->assertSame('A', $bus->dispatch($queryA));
         $this->assertSame('B', $bus->dispatch($queryB));
+    }
+
+    #[Test]
+    public function it_auto_discovers_handlers_by_convention(): void
+    {
+        $bus = $this->createAutoDiscoveringQueryBus();
+
+        $this->assertSame('user:5', $bus->dispatch(new GetUserQuery(5)));
+    }
+
+    #[Test]
+    public function it_does_not_construct_the_handler_on_cache_hits(): void
+    {
+        TtlHandler::$constructions = 0;
+
+        $bus = new QueryBus(
+            new BusDispatcher($this->container, false, 'App\\Queries', 'App\\Queries', 'Query'),
+        );
+        $bus->register(TtlQuery::class, TtlHandler::class);
+        $bus->addMiddleware(new CacheQueryMiddleware(
+            new CacheRepository(new ArrayStore),
+            new CacheKeyGenerator(':'),
+            300,
+        ));
+
+        $first = $bus->dispatch(new TtlQuery);
+
+        $this->assertSame('ttl:600', $first);
+        $this->assertSame($first, $bus->dispatch(new TtlQuery));
+
+        $this->assertSame(1, TtlHandler::$constructions);
     }
 }

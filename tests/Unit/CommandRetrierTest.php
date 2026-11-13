@@ -4,32 +4,29 @@ declare(strict_types=1);
 
 namespace Nactu\Tests\Unit;
 
+use DomainException;
 use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Log\LogManager;
 use Illuminate\Validation\ValidationException;
 use Nactu\Middlewares\CommandRetrier;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class CommandRetrierTest extends TestCase
 {
-    private Container $app;
-
     protected function setUp(): void
     {
-        $this->app = Container::setInstance(new class extends Container
+        $container = new class extends Container
         {
             public function runningInConsole(): bool
             {
                 return false;
             }
-        });
+        };
 
-        $logManager = $this->createMock(LogManager::class);
-        $this->app->instance('log', $logManager);
-        $this->app->alias('log', LogManager::class);
+        Container::setInstance($container);
     }
 
     protected function tearDown(): void
@@ -84,7 +81,7 @@ class CommandRetrierTest extends TestCase
     #[Test]
     public function it_does_not_retry_validation_exceptions(): void
     {
-        $retrier = new CommandRetrier(3, 0);
+        $retrier = new CommandRetrier(3, 0, [ValidationException::class]);
         $command = new class {};
         $attempt = 0;
 
@@ -108,7 +105,7 @@ class CommandRetrierTest extends TestCase
     #[Test]
     public function it_does_not_retry_model_not_found_exceptions(): void
     {
-        $retrier = new CommandRetrier(3, 0);
+        $retrier = new CommandRetrier(3, 0, [ModelNotFoundException::class]);
         $command = new class {};
         $attempt = 0;
 
@@ -162,5 +159,68 @@ class CommandRetrierTest extends TestCase
 
         $this->assertSame('first_try', $result);
         $this->assertSame(1, $attempt);
+    }
+
+    #[Test]
+    public function it_does_not_retry_exceptions_in_the_except_list(): void
+    {
+        $retrier = new CommandRetrier(3, 0, [RuntimeException::class]);
+        $command = new class {};
+        $attempt = 0;
+
+        try {
+            ($retrier)($command, function () use (&$attempt): never {
+                $attempt++;
+                throw new RuntimeException('Not retryable');
+            });
+        } catch (RuntimeException) {
+            $this->assertSame(1, $attempt);
+
+            return;
+        }
+
+        $this->fail('Expected RuntimeException was not thrown');
+    }
+
+    #[Test]
+    public function it_retries_exceptions_outside_the_except_list(): void
+    {
+        $retrier = new CommandRetrier(2, 0, [RuntimeException::class]);
+        $command = new class {};
+        $attempt = 0;
+
+        try {
+            ($retrier)($command, function () use (&$attempt): never {
+                $attempt++;
+                throw new DomainException('Retryable');
+            });
+        } catch (DomainException) {
+            $this->assertSame(2, $attempt);
+
+            return;
+        }
+
+        $this->fail('Expected DomainException was not thrown');
+    }
+
+    #[Test]
+    public function it_makes_at_least_one_attempt_even_with_zero_configured(): void
+    {
+        $retrier = new CommandRetrier(0, 0);
+        $command = new class {};
+        $attempt = 0;
+
+        try {
+            ($retrier)($command, function () use (&$attempt): never {
+                $attempt++;
+                throw new Exception('Once');
+            });
+        } catch (Exception) {
+            $this->assertSame(1, $attempt);
+
+            return;
+        }
+
+        $this->fail('Expected Exception was not thrown');
     }
 }

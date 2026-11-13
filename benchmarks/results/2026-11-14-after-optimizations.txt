@@ -1,0 +1,10 @@
+Nactu benchmark — PHP 8.5.9 | Darwin x86_64
+case                                              ops       µs/op        ops/sec
+----------------------------------------------------------------------------------
+cache_key_generation (isolated)               100,000       12.634         79,148
+query_cache_hit                               100,000       42.278         23,652
+query_cache_miss                               20,000       71.098         14,065
+query_uncached (no CacheableQuery)            100,000       27.461         36,415
+command_success (retry + monitor)             100,000       27.796         35,975
+command_failure (non-retryable, logged)         5,000       33.461         29,885
+dispatch_bare (no middleware)                 100,000       21.710         46,062
