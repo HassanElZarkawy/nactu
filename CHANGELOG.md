@@ -11,8 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `CacheInvalidationService` with `invalidateByTags()`, `invalidateKeys()`, `clearAll()`, and `warm()` — previously documented, now implemented and bound in the container
 - Config-driven non-retryable exception list (`retry.except`, defaulting to `ValidationException` and `ModelNotFoundException`)
 - Middleware may now pass a modified command to `$next(...)`
-- `make:handler` / `make:query-handler` append the `Handler` suffix automatically, matching `make:command` / `make:query`
-- Feature (integration) test suite using Orchestra Testbench covering the service provider, auto-discovery, middleware wiring, cache configuration, and `make:*` generators
+- Feature (integration) test suite using Orchestra Testbench covering the service provider, auto-discovery, middleware wiring, cache configuration, and the `nactu:*` generators
 - `composer test`, `composer analyse`, `composer bench`, and `composer test-coverage` scripts
 
 ### Changed
